@@ -1,0 +1,1139 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Directory Tree &#8212; vanDANA | User Manual 2022 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>::: {.cell .markdown cell_id=”0593d8eaf22c46c6b20e6a9da78dc6e7” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+<strong>Kai Thin, Tejas Patel - Department of Mechanical Engineering, Michigan
+State University, East Lansing, MI, 2022</strong>
+:::</p>
+<p>::: {.cell .markdown cell_id=”2d1891bbdfbb42a089fe07ad6bb389de” deepnote_app_coordinates=”{“h”:11,”w”:12,”x”:0,”y”:97}” deepnote_cell_type=”markdown”}
+vanDANA is a highly efficient FEM Immersed Boundary (IB) based
+Flow-thermal FSI solver utilizing the
+<a class="reference external" href="https://fenicsproject.org/">FEniCS</a> library (version 2019.2.0). The
+solver is based on the <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999105000148">Distibuted Langrange Multiplier based Fictiious
+Domain
+method</a>
+and is extended to deal with <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999106000167">heat
+transfer</a>.
+The interpolation of variables is conducted using the smeared
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0021999109004136">delta-functions</a>.
+Additionally, the flow solver is incompressible and has the option of
+choosing from various stabilization schemes : SUPG, PSPG and Crosswind;
+and the structure can be set as either incompressible/compressible.</p>
+<p>This manual intends to create a basic understanding of the numerical
+algorithm and also provides a detailed explanation of the workflow for
+the reader to set up a user-defined problem. Here we expect the reader
+to have some basic knowledge of coding partial differential equations in
+<a class="reference external" href="https://fenicsproject.org">FEniCS</a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Note:<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} vanDANA is licensed under the GNU GPL,
+version 3 or any later version and is Copyright (2022) by the authors.
+:::</p>
+<p>::: {.cell .markdown cell_id=”24029acd542840ddb239b4d11ce03cff” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:7}” deepnote_cell_type=”markdown”}</p>
+<section id="directory-tree">
+<h1>Directory Tree<a class="headerlink" href="#directory-tree" title="Permalink to this heading">¶</a></h1>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>vanDANA-IB-FSI
+ ┃
+ ┣ __init__.py
+ ┣ vanDANA.py
+ ┣ LICENSE.md
+ ┃
+ ┣ common
+ ┃ ┣ __init__.py
+ ┃ ┣ constitutive_eq.py
+ ┃ ┣ delta_interpolation.py
+ ┃ ┣ fem_stabilizations.py
+ ┃ ┣ flow_temperature_variational_problem.py
+ ┃ ┣ flow_variational_problem.py
+ ┃ ┣ functions.py
+ ┃ ┣ lagrange_variational_problem.py
+ ┃ ┣ solid_variational_problem.py
+ ┃ ┗ solver_options.py
+ ┃
+ ┣ user_inputs
+ ┃ ┣ __init__.py
+ ┃ ┣ boundary_initial_conditions.py
+ ┃ ┣ problem_specific.py
+ ┃ ┣ user_parameters.py
+ ┃ ┗ ...
+ ┃
+ ┣ utilities
+ ┃ ┣ __init__.py
+ ┃.┣ utils.py
+ ┃ ┣ write.py
+ ┃ ┗ read.py   
+ ┃ 
+ ┣ src
+ ┃ ┣ flag.geo
+ ┃ ┣ mesh.py
+ ┃ ┣ fenics.sb
+ ┃ ┣ fenics_2019_dev 
+ ┃ ┗ ...
+ ┃
+ ┗ results
+   ┣ HDF5_files
+   ┣ mesh_files
+   ┣ restart_variables
+   ┣ XDMF_files 
+   ┗ text_files
+     ┣ flow_data.txt
+     ┣ flow_temp_data.txt
+     ┣ lagrange_data.txt
+     ┣ log_info.txt
+     ┣ restart.txt
+     ┣ runtime_stats.txt
+     ┣ solid_data.txt
+     ┣ solid_mesh_quality.txt
+     ┗ solid_temp_data.txt
+</pre></div>
+</div>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”d4acef93d0ef49369856e8f9969f7735” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+<strong>Figure 1: Directory tree for vanDANA IB-FSI code. Note: /src folder
+contains sample Gmsh (geo) files for reference.</strong>
+:::</p>
+<p>::: {.cell .markdown cell_id=”a26f6452dd564797b0804839bf25cdee” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”text-cell-h1” formattedRanges=”[]” is_collapsed=”false” tags=”[]”}</p>
+</section>
+<section id="files-and-modules">
+<h1>Files and modules<a class="headerlink" href="#files-and-modules" title="Permalink to this heading">¶</a></h1>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”64cda579c24e496e86cd7c583b652e43” deepnote_app_coordinates=”{“h”:2,”w”:8,”x”:0,”y”:0}” deepnote_cell_type=”text-cell-p” formattedRanges=”[{“fromCodePoint”:9,”marks”:{“bold”:true},”toCodePoint”:22,”type”:”marks”}]” is_collapsed=”false” tags=”[]”}
+vanDANA (IB-FSI branch is most recent) is a python package with main
+executable (vanDANA.py) and three submodules (common, utilities,
+user_inputs).
+:::</p>
+<p>::: {.cell .markdown cell_id=”151d6d35a83d481488fa6ae32c29b92f” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:13}” deepnote_cell_type=”markdown”}</p>
+<section id="vandana-py-vandanapy">
+<h2>vanDANA.py {#vandanapy}<a class="headerlink" href="#vandana-py-vandanapy" title="Permalink to this heading">¶</a></h2>
+<p>This is the main executable file that pulls information from other
+modules (namely: user inputs, utilities, common) and runs the main
+function <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}vanDANA_solver (args)<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} which sets the
+entire workflow. The user need not require making any changes to
+vanDANA.py. Before the time loop, the following preliminary operations
+are conducted in order:</p>
+<ol class="arabic simple">
+<li><p>Set the current directory and MPI controls.</p></li>
+<li><p>Read mesh files</p></li>
+<li><p>Load physical problem classes.</p></li>
+<li><p>Setup initial and boundary conditions.</p></li>
+<li><p>Preassemble the flow and temperature problems</p></li>
+<li><p>Create output files for postprocessing</p></li>
+<li><p>Read restart files (only if restarting the simulation)</p></li>
+</ol>
+<p>To obtain more control at the command prompt, we use the <a class="reference external" href="https://docs.python.org/3/library/argparse.html">argparse
+library</a> which allows
+us to add keywords to the executable, for eg:
+<code class="docutils literal notranslate"><span class="pre">mpirun.mpich</span> <span class="pre">-n</span> <span class="pre">64</span> <span class="pre">python3</span> <span class="pre">vanDANA.py</span> <span class="pre">-restart=True</span> <span class="pre">-T=20</span> <span class="pre">-velocity_degree=1</span></code>.
+Note that we also provide a separate batch script
+(<a class="reference external" href="https://github.com/patelte8/vanDANA/blob/IB-FSI/src/fenics.sb">src/fenics.sb</a>)
+to submit jobs on the HPC cluster.</p>
+<p>Our Immersed Boundary FSI formulation is based on the Distributed
+Lagrange Multiplier (DLM) based Fictitious Domain (FD) method and the
+physical problem is decomposed into the fluid, solid and Lagrange
+multiplier sub-problems. The entire code is non-dimensional, and we use
+the Finite Element Method (FEM) for spatial discretization of the
+governing equations. For a detailed understanding of the numerical
+scheme, we advise the reader to refer to Yu ${ }^{[1]}$ and Yu et al
+${ }^{[2]}$.
+:::</p>
+<p>::: {.cell .markdown cell_id=”0e26da99175b4785b86fc8edd28d7066” deepnote_app_coordinates=”{“h”:41,”w”:12,”x”:0,”y”:109}” deepnote_cell_type=”markdown” tags=”[]”}
+<strong>Flow problem: IPCS scheme</strong></p>
+<p><strong>Step 1 - Velocity prediction</strong>: solve for $u^{*}$</p>
+<p>$$
+\begin{aligned}
+\left\langle\frac{\boldsymbol{u}^{<em>}-\boldsymbol{u}^{\boldsymbol{\theta}}}{\Delta \tau}, \boldsymbol{v}\right\rangle+ &amp; \left\langle\frac{3 \boldsymbol{u}^{\boldsymbol{\theta}}-\boldsymbol{u}^{\boldsymbol{\theta}-1}}{2} \cdot \nabla \boldsymbol{u}_{\boldsymbol{c k}}^{</em>}, \boldsymbol{v}\right\rangle \
+&amp; +\left\langle\frac{\nabla \boldsymbol{u}<em>{\boldsymbol{c k}}^{*}+\nabla \boldsymbol{u}</em>{\boldsymbol{c k}}^{* T}}{R e}-p^{\theta} \boldsymbol{I}, \nabla \boldsymbol{v}\right\rangle+\left\langle p^{\theta} \cdot \boldsymbol{n}, \boldsymbol{v}\right\rangle_{\partial \boldsymbol{\Omega}}-\left\langle\frac{\widehat{\boldsymbol{g}}}{F r^{2}}, \boldsymbol{v}\right\rangle \
+&amp; +\left\langle\gamma_{S U P G}\left(\boldsymbol{u}^{\boldsymbol{\theta}}\right) P\left(\boldsymbol{u}^{\boldsymbol{\theta}}, \boldsymbol{v}\right), \boldsymbol{R}^{\boldsymbol{\theta}}\right\rangle+\left\langle\gamma_{C W}\left(\boldsymbol{u}^{\boldsymbol{\theta}}\right) \Lambda\left(\boldsymbol{u}^{\boldsymbol{\theta}}, \boldsymbol{u}^{*}\right), \nabla \boldsymbol{v}\right\rangle=\left\langle\lambda^{\boldsymbol{\theta}}, \boldsymbol{v}\right\rangle_{\boldsymbol{P}}
+\end{aligned}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (1) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>where, $\boldsymbol{u}^{<em>}$ is the unknown intermediate flow velocity
+and
+$\boldsymbol{u}_{\boldsymbol{c k}}^{</em>}=\frac{\boldsymbol{u}^{*}+\boldsymbol{u}^{\boldsymbol{\theta}}}{2}$
+is the Crank-Nicolson velocity. In the above equation, the vector
+Lagrange multiplier $\boldsymbol{\lambda}$ serves as a pseudo body force
+only in the overlapping solid region $\boldsymbol{P}$ and needs to be
+interpolated from the Lagrangian mesh via the smeared delta functions.</p>
+<p><strong>Step 2 - Pressure projection $&amp;$ velocity correction</strong>: solve for
+$p^{\theta+1}$ and correct $u^{\Phi}$.</p>
+<p>$$
+\begin{gathered}
+\left\langle\nabla\left(p^{\theta+1}-p^{\theta}\right), \nabla q\right\rangle+\frac{1}{\Delta \tau}\left\langle\nabla \cdot \boldsymbol{u}^{*}, q\right\rangle+\left\langle\gamma_{P S P G}\left(\boldsymbol{u}^{\theta}\right) \nabla q, \boldsymbol{R}^{\boldsymbol{\theta}}\right\rangle=0 \end{gathered}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (2) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>$$
+\begin{gathered}
+\left\langle\frac{\boldsymbol{u}^{\boldsymbol{\phi}}-\boldsymbol{u}^{*}}{\Delta \tau}, \boldsymbol{v}\right\rangle+\left\langle\nabla\left(p^{\theta+1}-p^{\theta}\right), \boldsymbol{v}\right\rangle=0
+\end{gathered}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (3) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p><strong>Solid problem (compressible)</strong>: solve for $\Delta x^{\theta+1}$ on the
+reference configuration.</p>
+<p>$$
+\begin{aligned}
+&amp;\left\langle\rho_{r} \frac{\Delta \boldsymbol{x}^{\boldsymbol{\theta}+\mathbf{1}}}{\Delta \tau^{2}}, \boldsymbol{\omega}\right\rangle_{\boldsymbol{P}<em>{\mathbf{0}}} \
+&amp;=\left\langle\frac{\boldsymbol{u}^{\boldsymbol{\phi}}}{\Delta \tau}, \boldsymbol{\omega}\right\rangle</em>{\boldsymbol{P}<em>{\mathbf{0}}}+\left\langle\rho</em>{r}-1 \frac{\Delta \boldsymbol{x}^{\boldsymbol{\theta}}}{\Delta \tau^{2}}, \boldsymbol{\omega}\right\rangle_{\boldsymbol{P}<em>{\mathbf{0}}}-\left\langle\nabla \boldsymbol{\omega}^{T}, \lambda</em>{0} \ln J \boldsymbol{F}^{-\mathbf{1}}+G\left(\boldsymbol{F}^{\boldsymbol{T}}-\boldsymbol{F}^{-\mathbf{1}}\right)\right\rangle_{\mathbf{P}<em>{\mathbf{0}}}^{\boldsymbol{\theta}+\mathbf{1}} \
+&amp;+\left\langle\rho</em>{r}-1 \frac{\widehat{\boldsymbol{g}}}{F r^{2}}, \boldsymbol{\omega}\right\rangle_{\boldsymbol{P}<em>{\mathbf{0}}}-\left\langle\lambda^{\boldsymbol{\theta}}, \boldsymbol{\omega}\right\rangle</em>{\boldsymbol{P}}
+\end{aligned}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (4) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p><strong>Lagrange multiplier problem</strong>: solve for $\lambda^{\theta+1}$ on the
+current configuration.</p>
+<p>$$
+\left\langle\frac{\Delta \boldsymbol{x}^{\boldsymbol{\theta}+1}}{\Delta \tau^{2}}-\frac{\boldsymbol{u}^{\boldsymbol{\phi}}}{\Delta \tau}, \zeta\right\rangle_{P}=\left\langle\lambda^{\boldsymbol{\theta}+1}-\lambda^{\boldsymbol{\theta}}, \boldsymbol{\zeta}\right\rangle_{P}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (5) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>In the above equations $\langle$,$\rangle$ represents the Euclidean
+inner product in the respective domain, $\boldsymbol{u}$ and $p$ are the
+fluid velocity and pressure, $\boldsymbol{x}$ is the solid displacement,
+$\boldsymbol{F}$ is the deformation gradient tensor and $\rho_{r}$ is
+the ratio of solid to fluid densities. Here, $\Omega$ is the overall
+fluid domain including the fictitious fluid and $P_{0}$ and $P$ are the
+reference and current solid configurations. The above DLM/FD algorithm
+is implemented in the time loop in <strong>vanDANA_solver (args)</strong>, see Figure
+2 below.
+:::</p>
+<p>::: {.cell .code cell_id=”76e3dda7e8524ed4beff5432f342f66e” deepnote_app_coordinates=”{“h”:73,”w”:12,”x”:0,”y”:151}” deepnote_cell_type=”code” output_cleared=”true” tags=”[]”}</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Time loop</span>
+<span class="k">try</span><span class="p">:</span>
+
+    <span class="k">while</span> <span class="n">T</span> <span class="o">&gt;</span> <span class="n">tsp</span> <span class="ow">and</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">:</span>
+        
+        <span class="n">timer_dt</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">update_counter</span><span class="p">(</span><span class="n">counters</span><span class="p">)</span>
+
+        <span class="c1"># Update current time</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">tsp</span>   
+
+        <span class="c1"># Update boundary conditions : only if time-dependent</span>
+        <span class="c1"># parabolic_profile.t = t; tim.t = t; num_cycle.cycle = int(t / t_period)     </span>
+        <span class="c1"># for ui, value in inflow.items():     </span>
+            <span class="c1">#  inflow[ui][0].v = evaluate_boundary_val(param_LSPV); inflow[ui][1].v = evaluate_boundary_val(param_LIPV)</span>
+            <span class="c1">#  inflow[ui][2].v = evaluate_boundary_val(param_RSPV); inflow[ui][3].v = evaluate_boundary_val(param_RIPV)</span>
+
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">timer_si</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">Lm_f</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">interpolate_nonmatching_mesh_delta</span><span class="p">(</span><span class="n">fsi_interpolation</span><span class="p">,</span> <span class="n">Lm_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">FS</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">interpolation_fx</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">))</span>
+            <span class="n">si</span> <span class="o">+=</span> <span class="n">timer_si</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            
+        <span class="n">timer_s1</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;1: Predict tentative velocity step&quot;, flush = True)</span>
+        <span class="n">A1</span><span class="p">,</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">assemble_tentative_velocity</span><span class="p">(</span><span class="n">u_</span><span class="p">,</span> <span class="n">p_</span><span class="p">,</span> <span class="n">Lm_f</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">flow</span><span class="o">.</span><span class="n">solve_tentative_velocity</span><span class="p">(</span><span class="n">A1</span><span class="p">,</span> <span class="n">u_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b1</span><span class="p">,</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;velocity&#39;</span><span class="p">])</span>
+        <span class="n">s1</span> <span class="o">+=</span> <span class="n">timer_s1</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">timer_s2</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;2: Pressure correction step&quot;, flush = True)</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">assemble_pressure_correction</span><span class="p">(</span><span class="n">u_</span><span class="p">,</span> <span class="n">p_</span><span class="p">,</span> <span class="n">Lm_f</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">flow</span><span class="o">.</span><span class="n">solve_pressure_correction</span><span class="p">(</span><span class="n">p_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b2</span><span class="p">,</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;pressure&#39;</span><span class="p">])</span>
+        <span class="n">s2</span> <span class="o">+=</span> <span class="n">timer_s2</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">timer_s3</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;3: Velocity correction step&quot;, flush = True)</span>
+        <span class="n">b3</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">assemble_velocity_correction</span><span class="p">(</span><span class="n">u_</span><span class="p">,</span> <span class="n">p_</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">flow</span><span class="o">.</span><span class="n">solve_velocity_correction</span><span class="p">(</span><span class="n">u_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b3</span><span class="p">,</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;velocity&#39;</span><span class="p">])</span>
+        <span class="n">s3</span> <span class="o">+=</span> <span class="n">timer_s3</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">assigner_uv</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">uv</span><span class="p">,</span> <span class="p">[</span><span class="n">u_</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">ui</span><span class="p">]</span> <span class="k">for</span> <span class="n">ui</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">u_components</span><span class="p">)])</span>
+
+        <span class="c1"># --------------------------------------------------------------------------------- </span>
+
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_temperature&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">timer_si</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">LmTf_</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">interpolate_nonmatching_mesh_delta</span><span class="p">(</span><span class="n">fsi_interpolation</span><span class="p">,</span> <span class="n">LmTs_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">FS</span><span class="p">[</span><span class="s1">&#39;fluid_temp&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">interpolation_fx</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">))</span>
+            <span class="n">si</span> <span class="o">+=</span> <span class="n">timer_si</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">timer_s4</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;4: Energy conservation step&quot;, flush = True)</span>
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_temperature&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">A4</span><span class="p">,</span> <span class="n">b4</span> <span class="o">=</span> <span class="n">flow_temp</span><span class="o">.</span><span class="n">assemble_temperature</span><span class="p">(</span><span class="n">T_</span><span class="p">,</span> <span class="n">uv</span><span class="p">,</span> <span class="n">LmTf_</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+            <span class="n">flow_temp</span><span class="o">.</span><span class="n">solve_temperature</span><span class="p">(</span><span class="n">A4</span><span class="p">,</span> <span class="n">T_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b4</span><span class="p">,</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">])</span>
+        <span class="n">s4</span> <span class="o">+=</span> <span class="n">timer_s4</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>	    
+
+        <span class="c1"># --------------------------------------------------------------------------------- </span>
+
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">timer_si</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">uf_</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">interpolate_nonmatching_mesh_delta</span><span class="p">(</span><span class="n">fsi_interpolation</span><span class="p">,</span> <span class="n">uv</span><span class="p">,</span> <span class="n">FS</span><span class="p">[</span><span class="s1">&#39;lagrange&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">interpolation_fx</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">))</span>
+            <span class="n">si</span> <span class="o">+=</span> <span class="n">timer_si</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">timer_s5</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>    
+        <span class="c1"># print(BLUE % &quot;5: Solid momentum eq. step&quot;, flush = True)    </span>
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>    
+            <span class="n">a5</span> <span class="o">=</span> <span class="n">solid</span><span class="o">.</span><span class="n">assemble_solid_problem</span><span class="p">(</span><span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;compressible_solid&#39;</span><span class="p">],</span> <span class="n">Dp_</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="n">uf_</span><span class="p">,</span> <span class="n">Lm_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dt</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">solid</span><span class="o">.</span><span class="n">solve_solid_displacement</span><span class="p">(</span><span class="n">solid_mesh_R</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;compressible_solid&#39;</span><span class="p">],</span> <span class="n">a5</span><span class="p">,</span> <span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mix</span><span class="p">,</span> <span class="n">ps_</span><span class="p">,</span> <span class="n">p_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;solid&#39;</span><span class="p">])</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">solid</span><span class="o">.</span><span class="n">change_initial_guess</span><span class="p">(</span><span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mix</span><span class="p">)</span>	        		        	
+                <span class="n">solid</span><span class="o">.</span><span class="n">solve_solid_displacement</span><span class="p">(</span><span class="n">solid_mesh_R</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;compressible_solid&#39;</span><span class="p">],</span> <span class="n">a5</span><span class="p">,</span> <span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">mix</span><span class="p">,</span> <span class="n">ps_</span><span class="p">,</span> <span class="n">p_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bcs</span><span class="p">[</span><span class="s1">&#39;solid&#39;</span><span class="p">])</span>
+
+            <span class="n">Dp_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span><span class="o">.</span><span class="n">axpy</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">())</span>
+            <span class="c1"># solid.compute_jacobian(J_, Dp_[0])</span>
+
+            <span class="n">us_</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+            <span class="n">us_</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span><span class="o">.</span><span class="n">axpy</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">dt</span><span class="p">),</span> <span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">())</span>
+        <span class="n">s5</span> <span class="o">+=</span> <span class="n">timer_s5</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        
+        <span class="c1"># --------------------------------------------------------------------------------- </span>
+
+        <span class="n">timer_s6</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;6: Lagrange multiplier (fictitious force) step&quot;, flush = True)</span>
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">a6</span><span class="p">,</span> <span class="n">b6</span> <span class="o">=</span> <span class="n">lagrange</span><span class="o">.</span><span class="n">assemble_lagrange_multiplier</span><span class="p">(</span><span class="n">Lm_</span><span class="p">,</span> <span class="n">us_</span><span class="p">,</span> <span class="n">uf_</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+            <span class="n">lagrange</span><span class="o">.</span><span class="n">solve_lagrange_multiplier</span><span class="p">(</span><span class="n">a6</span><span class="p">,</span> <span class="n">Lm_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b6</span><span class="p">)</span>
+        <span class="n">s6</span> <span class="o">+=</span> <span class="n">timer_s6</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>    
+
+        <span class="c1"># --------------------------------------------------------------------------------- </span>
+
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_temperature&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">timer_si</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">Ts_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">interpolate_nonmatching_mesh_delta</span><span class="p">(</span><span class="n">fsi_interpolation</span><span class="p">,</span> <span class="n">T_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">FS</span><span class="p">[</span><span class="s1">&#39;solid_temp&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">interpolation_fx</span><span class="p">,</span> <span class="s2">&quot;S&quot;</span><span class="p">))</span>
+            <span class="n">si</span> <span class="o">+=</span> <span class="n">timer_si</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="n">timer_s7</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="c1"># print(BLUE % &quot;7: Solid temperature based lagrange multiplier step&quot;, flush = True)</span>
+        <span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_FSI&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_temperature&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">a7</span><span class="p">,</span> <span class="n">b7</span> <span class="o">=</span> <span class="n">solid_temp</span><span class="o">.</span><span class="n">assemble_solid_temperature_lagrange_multiplier</span><span class="p">(</span><span class="n">Ts_</span><span class="p">,</span> <span class="n">uf_</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+            <span class="n">solid_temp</span><span class="o">.</span><span class="n">solve_solid_temperature_lagrange_multiplier</span><span class="p">(</span><span class="n">a7</span><span class="p">,</span> <span class="n">LmTs_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b7</span><span class="p">)</span>
+        <span class="n">s7</span> <span class="o">+=</span> <span class="n">timer_s7</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”37a361d91de94bc59c0a84e46db0ecf2” deepnote_app_coordinates=”{“h”:3,”w”:12,”x”:0,”y”:225}” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Figure 2:$\quad$ Time loop in vanDANA.py which runs the
+IB-FSI solver algorithm. All steps are timed using separate timers and
+the timings are listed in log_info.txt.<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}
+:::</p>
+<p>::: {.cell .markdown cell_id=”b233c99f7d224552bf3cc7c12e1dc962” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:229}” deepnote_cell_type=”markdown” tags=”[]”}
+Our flow solver uses the Incremental Pressure Correction Scheme (IPCS)
+and is solved in step 1,2 and 3. The solid momentum equation is solved
+in step 5 and the Lagrange multiplier problem is solved in step 6. In
+the solid equation, one needs to note that we solve for
+$\Delta \boldsymbol{x}$ which is the incremental displacement instead of
+the current solid position $\boldsymbol{x}$ (see Figure 3).
+:::</p>
+<p>::: {.cell .markdown cell_id=”e0b6bb7ecc5f4a37b7df41857c6044ab” deepnote_app_coordinates=”{“h”:13,”w”:12,”x”:0,”y”:235}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”3b8746ac51584ced8b121ba05adaf8a6” deepnote_app_coordinates=”{“h”:3,”w”:12,”x”:0,”y”:249}” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Figure 3:$\quad$ Deformation of the solid continuum in
+space. Here, $\boldsymbol{X}$ is the reference configuration,
+$\boldsymbol{x}$ is the current configuration and
+$\Delta \boldsymbol{x}$ is the incremental displacement at any
+particular time step.<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}
+:::</p>
+<p>::: {.cell .markdown cell_id=”245874898e5d4ac0b16890b6336bd212” deepnote_app_coordinates=”{“h”:37,”w”:12,”x”:0,”y”:253}” deepnote_cell_type=”markdown” tags=”[]”}
+<strong>Interpolation</strong>: The velocity $\boldsymbol{u}^{\boldsymbol{\phi}}$
+calculated at step 3 is interpolated to the solid current configuration
+using the smeared delta functions. The same delta function is used to
+interpolate the Lagrange multiplier onto the fluid Eulerian mesh.</p>
+<p>$$
+u^{\phi}(X)=\int_{\Omega} u^{\phi}(x) \delta(x-X) d x  \quad\quad \quad \lambda(x)=\int_{P} \lambda(X) \delta(x-X) d X
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (6) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>where
+$\delta(x-X)=\frac{1}{h^{3}} \Phi_{4}\left(\frac{x-X}{h}\right) \Phi_{4}\left(\frac{y-Y}{h}\right) \Phi_{4}\left(\frac{z-Z}{h}\right)$
+and the 4-point piecewise function is:</p>
+<p>$$
+\Phi_{4}(r)=\left{\begin{array}{cc}
+\frac{1}{8}\left(3-2|r|-\sqrt{1+4|r|-4 r^{2}}\right) &amp; |r| \leq 1 \
+\frac{1}{8}\left(5-2|r|-\sqrt{-7+12|r|-4 r^{2}}\right) &amp; 1 \leq|r| \leq 2 \
+0 &amp; 2 \leq|r|
+\end{array}\right}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (7) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>Furthermore, our <strong>vanDANA_solver</strong> is also extended to deal with heat
+transfer and the mathematical formulation is given as:</p>
+<p><strong>Flow temperature problem</strong>: solve for $\mathrm{T}^{\theta+1}$.</p>
+<p>$$
+\begin{aligned}
+\left\langle\frac{\mathrm{T}^{\theta+1}-\mathrm{T}^{\theta}}{\Delta \tau}, \gamma\right\rangle &amp; +\left\langle\boldsymbol{u}^{\boldsymbol{\theta}+\mathbf{1}} \cdot \nabla \mathrm{T}<em>{c k}, \gamma\right\rangle+\frac{1}{P e}\left\langle\nabla \mathrm{T}</em>{c k}, \nabla \gamma\right\rangle-\left\langle\frac{2E c}{R e}\langle\boldsymbol{E}(\boldsymbol{u}),\boldsymbol{\nabla u}\rangle^{\boldsymbol{\theta}+\mathbf{1}}, \gamma\right\rangle \
+&amp; +\left\langle\gamma_{S U P G}\left(\boldsymbol{u}^{\boldsymbol{\theta}+\mathbf{1}}\right) P\left(\boldsymbol{u}^{\boldsymbol{\theta}+\mathbf{1}}, \gamma\right), \boldsymbol{R}^{\boldsymbol{\theta}}\right\rangle+\left\langle\gamma_{C W}\left(\mathrm{~T}^{\theta}\right) \Lambda\left(\boldsymbol{u}^{\boldsymbol{\theta}+\mathbf{1}}, \mathrm{T}^{\theta+1}\right), \nabla \gamma\right\rangle \
+&amp; =\left\langle\lambda_{T}^{\theta}, \gamma\right\rangle_{P}
+\end{aligned}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (8) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>set $\mathrm{T}<em>{s}^{\theta+1}=\mathrm{T}^{\theta+1}$ using
+$\mathrm{T}</em>{s}(\boldsymbol{X})=\int_{\Omega} \mathrm{T}(\boldsymbol{x}) \boldsymbol{\delta}(\boldsymbol{x}-\boldsymbol{X}) \boldsymbol{d} \boldsymbol{x}$.</p>
+<p><strong>Solid temperature Lagrange multiplier problem</strong>: solve for
+$\lambda_{T}{ }^{\theta+1}$.</p>
+<p>$$
+-\left\langle\lambda_{T}^{\theta+1}, \gamma_{s}\right\rangle_{P}=\left(\rho_{r} C_{p r}-1\right)\left\langle\frac{\mathrm{T}<em>{s}^{\theta+1}-\mathrm{T}</em>{s}^{\theta}}{\Delta \tau}, \gamma_{s}\right\rangle_{P}+\left\langle\frac{2E c}{R e}\langle\boldsymbol{E}(\boldsymbol{u}),\boldsymbol{\nabla u}\rangle^{\boldsymbol{\theta}+\mathbf{1}}, \gamma_{s}\right\rangle_{P}+\frac{k_{r}-1}{P e}\left\langle\nabla \mathrm{T}<em>{s, c k}, \nabla \gamma</em>{s}\right\rangle_{P}
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (9) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<p>where, $\mathrm{T}$ is the fluid temperature and
+$\mathrm{T}<em>{c k}=\frac{\mathrm{T}^{\theta+1}+\mathrm{T}^{\theta}}{2}$
+is the Crank-Nicolson discretization, $\mathrm{T}</em>{s}$ is the solid
+temperature, $E c$ is the Eckert number that accounts for heat
+generation due to viscous dissipation of the fluid, $C_{p r}$ and
+$k_{r}$ is the ratio of heat capacity and thermal conductivity of solid
+to fluid and $\lambda_{T}$ is the temperature based Lagrange multiplier.
+Note that in Figure 2, the flow temperature problem is computed in step
+4 and the solid temperature Lagrange multiplier problem is computed in
+step 7. Before ending the time loop, the solver outputs visualization
+files (xdmf format), restart files (h5 format), post processing txt
+files and also updates <a class="reference external" href="https://bitbucket.org/fenics-project/dolfin/src/master/dolfin/ale/ALE.cpp">(ALE in
+FEniCS)</a>
+and smoothens the solid Lagrangian mesh.
+:::</p>
+<p>::: {.cell .markdown cell_id=”a3a3b2d5eeb74f89b32db8c95d55d2d4” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:43}” deepnote_cell_type=”markdown”}</p>
+</section>
+<section id="common">
+<h2>common<a class="headerlink" href="#common" title="Permalink to this heading">¶</a></h2>
+<p>This module is the heart of <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}vanDANA_solver<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} and
+mainly comprises of different variational problems.</p>
+<p>Step 1, 2 &amp; 3 | <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}flow_variational_problem.py <code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}
+Step 4 |
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}flow_temperature_variational_problem.py<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} Step 5
+| <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}solid_variational_problem.py<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} Step 6 &amp; 7 |
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}lagrange_variational_problem.py<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}</p>
+<p>Each of these files contain separate class definitions and subroutines
+for pre-assembly, run-time assembly, solvers, and post-processing for
+their respective variational problems. Here, we have provided some basic
+post-processing subroutines for calculation of drag, lift, Nusset
+number, Jacobian and vorticity (for a 2D case problem). Again, the user
+need not require making any changes to any of the classes unless they
+desire to implement a custom user-defined subroutine.
+:::</p>
+<p>::: {.cell .markdown cell_id=”e082b0b9157e4684bd5612b4f52b8bd8” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+<section id="constitutive-eq-py-constitutive-eqpy">
+<h3>constitutive_eq.py {#constitutive_eqpy}<a class="headerlink" href="#constitutive-eq-py-constitutive-eqpy" title="Permalink to this heading">¶</a></h3>
+<p>For the constitutive nature of the material field, we define the fluid
+as Newtonian and the solid as neo-Hookean and compressible or
+incompressible:</p>
+<p>Newtonian fluid:
+$\quad \boldsymbol{\sigma}(\boldsymbol{u}, p)=-p \boldsymbol{I}+\frac{2}{R e} \boldsymbol{E}(\boldsymbol{u})$</p>
+<p>Compressible Neo-Hookean solid:
+$\quad \sigma_{s}(\boldsymbol{x}, \boldsymbol{X})=\lambda_{0} \ln J \boldsymbol{I}+G(\boldsymbol{B}-\boldsymbol{I})$</p>
+<p>Incompressible Neo-Hookean solid:
+$\boldsymbol{\sigma}<em>{s}(\boldsymbol{x}, \boldsymbol{X})=-p</em>{s} \boldsymbol{I}+G(\boldsymbol{B}-\boldsymbol{I})$</p>
+<p>where,
+$\boldsymbol{E}(\boldsymbol{u})=\frac{1}{2}\left(\nabla \boldsymbol{u}+(\nabla \boldsymbol{u})^{T}\right)$
+is the strain rate tensor, $\lambda_{0}$ is the non-dimensional
+compressibility, $G$ is the non-dimenionsional shear modulus,
+$\boldsymbol{B}=\boldsymbol{F} \boldsymbol{F}^{T}$ is the finger tensor,
+$\boldsymbol{F}=\frac{\partial \boldsymbol{x}}{\partial \boldsymbol{X}}$
+is the deformation gradient tensor and
+$J=\operatorname{det}(\boldsymbol{F})$. In case of an incompressible
+solid we also force the Jacobian to be 1 by adding the term
+$\langle J-1, \boldsymbol{\omega}\rangle_{P_{0}}$ to the solid problem
+(step 5 in Figure 2).
+:::</p>
+<p>::: {.cell .markdown cell_id=”ad827a818e86459cb08037b7053050ea” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+<section id="delta-interpolation-py-delta-interpolationpy">
+<h3>delta_interpolation.py {#delta_interpolationpy}<a class="headerlink" href="#delta-interpolation-py-delta-interpolationpy" title="Permalink to this heading">¶</a></h3>
+<p>The smeared delta functions are implemented using a custom C++ code
+(which runs in MPI) and the FEniCS backend allows the integration of
+custom C++ strings by exposing them as a python object with pybind11.
+This is done using the
+<a class="reference external" href="https://bitbucket.org/fenics-project/dolfin/src/master/python/dolfin/jit/pybind11jit.py">compile_cpp_code</a>
+functionality in FEniCS.</p>
+<p>In such an IB-FSI solver, the delta functions essentially determine the
+order of accuracy of the IB method. Due to the inherent nature of the
+delta functions, it is obligatory that the fluid grid surrounding the
+solid is structured ${ }^{[3]}$ and for good accuracy, we recommend that
+the solid mesh size stays between
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}0.8<code class="docutils literal notranslate"><span class="pre">&lt;i&gt;</span></code>{=html}h<code class="docutils literal notranslate"><span class="pre">&lt;/i&gt;</span></code>{=html} -
+1.5<code class="docutils literal notranslate"><span class="pre">&lt;i&gt;</span></code>{=html}h<code class="docutils literal notranslate"><span class="pre">&lt;/i&gt;</span></code>{=html}<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} at all times where
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}<code class="docutils literal notranslate"><span class="pre">&lt;i&gt;</span></code>{=html}h<code class="docutils literal notranslate"><span class="pre">&lt;/i&gt;</span></code>{=html}<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} is the uniform fluid
+grid size ${ }^{[1]}$. Here, note that here the solid grid can be
+unstructured and non-uniform. Also, the delta functions utilize
+piecewise functions Φ with different support areas and continuity
+properties ${ }^{[4]}$ which directly dictate their behavior in terms of
+numerical stability and accuracy. We implement nine different piecewise
+functions ${ }^{[4]}$ and after extensive testing we find that the
+4-point piecewise function (Eq. 7) provides a good balance between
+stability and accuracy, hence it is set as our default choice in
+user_parameters.py.
+:::</p>
+<p>::: {.cell .markdown cell_id=”3bff20c7ed28406bab9a55f8cd19d292” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+<section id="fem-stabilizations-py-fem-stabilizationspy">
+<h3>fem_stabilizations.py {#fem_stabilizationspy}<a class="headerlink" href="#fem-stabilizations-py-fem-stabilizationspy" title="Permalink to this heading">¶</a></h3>
+<p>In the Finite-Element realm, for highly advective flows and species
+transport (i.e., at high $R e$ and $P e$ ) it is known that the standard
+Galerkin formulation can lead to spurious oscillations in the solution.
+Hence to prevent this phenomenon, it is necessary to incorporate
+appropriate stabilization schemes to ensure numerical stability. In the
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}vanDANA_solver<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} we use the well-established
+Streamline-Upwind Petrov Galerkin (SUPG) stabilization by introducing
+the following term to Eqs. (1) and (8):</p>
+<p>$$
+\int_{\Omega} \gamma_{S U P G}(\boldsymbol{u}) P(\boldsymbol{u}, \boldsymbol{m}) \cdot \boldsymbol{R}^{\boldsymbol{\theta}} d \Omega
+$$</p>
+<p>where,</p>
+<p>$$
+\gamma_{S U P G}(\boldsymbol{u})=\alpha\left[\left(\frac{2}{\Delta \tau}\right)^{2}+\left(\frac{2|| \boldsymbol{u} |}{h}\right)^{2}+9\left(\frac{4}{\mathbb{C} h^{2}}\right)^{2}\right]^{-\frac{1}{2}},
+$$</p>
+<p>$\quad \quad$ In the above equation , $\boldsymbol{R}$ is the residual,
+$P(\boldsymbol{u}, \boldsymbol{m})=\boldsymbol{u} \cdot \nabla \boldsymbol{m}$
+is the SUPG operator, $h$ denotes the cell diameter, $\mathbb{C}$
+denotes the respective control parameter (i.e., $R e$ or $P e$ ) and the
+coefficient $\alpha$ is set as $0.85$. Next, we also introduce another
+residual based pressure-stabilization term to Eq. (2), namely the
+pressure stabilizing Petrov Galerkin (PSPG) scheme that is given as:</p>
+<p>$$
+\int_{\Omega} \gamma_{P S P G}(\boldsymbol{u}) \nabla q \cdot \boldsymbol{R}^{\boldsymbol{\theta}} d \Omega,
+$$</p>
+<p>where $\gamma_{P S P G}=\gamma_{S U P G}$. The effect of such a PSPG
+stabilization scheme is witnessed when circumventing pressure
+instabilities that arise due to unstable LBB pairs, for e.g., in case of
+equal order discretization (P1-P1) for velocity and pressure. Note that
+since we already use the IPCS fractional stepping scheme to decouple the
+velocity and pressure, we can still use P1-P1 elements without PSPG
+stabilization. However, if using equal order discretization for velocity
+and pressure in case of highly advective flows, it is good practice to
+use PSPG stabilization since it helps to reduce spurious oscillations in
+the pressure field. In our code, both SUPG and the PSPG stabilizations
+are implemented using an explicit formulation.</p>
+<p>At times in presence of sharp gradients/discontinuities in the flow
+field, the SUPG stabilization alone is not sufficient to damp numerical
+instabilities. This is mainly because the SUPG operator
+$P(\boldsymbol{u}, \boldsymbol{m})$ adds numerical diffusion only in the
+streamwise direction. To overcome this, we also introduce a crosswind
+stabilizing operator $\Lambda(\boldsymbol{u}, \boldsymbol{\phi})$ to
+prevent the localized undershooting/overshooting of the field variables
+in the presence of sharp gradients/discontinuities. As such the
+following term taken from R. Codina ${ }^{[5]}$, is added to Eqs. (1)
+and (8):</p>
+<p>$$
+\int_{\Omega}\gamma_{C W}(\boldsymbol{\phi}) \Lambda(\boldsymbol{u}, \boldsymbol{\phi}): \boldsymbol{\nabla} \boldsymbol{m} d \Omega
+$$</p>
+<p>$\quad$where,</p>
+<p>$$
+\begin{gathered}
+\gamma_{C W}(\boldsymbol{\phi})=\frac{1}{2} \beta_{c} h \frac{|| \boldsymbol{R}^{\boldsymbol{\phi}} |}{|\nabla \boldsymbol{\phi}|}
+\end{gathered}
+$$</p>
+<p>In the above Eq’s,
+$\Lambda(\boldsymbol{u}, \boldsymbol{\phi})=\left{\begin{array}{rr}\boldsymbol{I}-\frac{\boldsymbol{u} \otimes \boldsymbol{u}}{|\boldsymbol{u}|^{2}} &amp; \text { if } \boldsymbol{u} \neq \mathbf{0} \ \mathbf{0} &amp; \text { if } \boldsymbol{u}=\mathbf{0}\end{array}\right}\cdot \nabla \boldsymbol{\phi}$,
+and $\beta_{c}=$
+$\max \left(0, 0.7-\frac{2|| \nabla \phi |}{\mathbb{C} h|| \boldsymbol{R}^{\phi} |}\right)$
+and $\boldsymbol{\phi}$ is the unknown field variable. In our code, we
+implement an implicit formulation for the crosswind stabilization term.
+:::</p>
+<p>::: {.cell .markdown cell_id=”7bbccd4315bf408ea56e915e2c0fcbf5” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+<section id="solver-options-py-solver-optionspy">
+<h3>solver_options.py {#solver_optionspy}<a class="headerlink" href="#solver-options-py-solver-optionspy" title="Permalink to this heading">¶</a></h3>
+<p>The FEniCS language uses several linear algebra backends and the default
+choice is set as PETSc. For iterative solvers with the PETSc backend,
+FEniCS provides a library of <a class="reference external" href="https://fenicsproject.org/pub/tutorial/html/._ftut1017.html">Krylov solvers and
+preconditioners</a>
+to choose from.</p>
+<p>In vanDANA, the user control to modify iterative solvers,
+preconditioners, absolute/relative tolerances, and monitoring
+convergence for all the physical variational problems is provided in
+solver_options.py. Here for the flow solver, we use python dictionaries
+to initialize solver parameters and the convergence is based on an
+absolute tolerance value of 10${ }^{-8}$. For the non-linear solid
+problem, we use the newtons method wherein the convergence is determined
+based on a relative tolerance value of 10${ }^{-6}$ (see Figure 4). The
+$\Delta \boldsymbol{x}$ from the previous time step is provided as
+intital guess to the newtons solver and we note that it normally takes
+about 2-3 iterations to converge.
+:::</p>
+<p>::: {.cell .code cell_id=”0dade15d21654aaebe12652983e6458a” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”code” output_cleared=”true” tags=”[]”}</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Solver parameters</span>
+<span class="n">krylov_solvers</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">monitor_convergence</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">report</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">error_on_nonconvergence</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">nonzero_initial_guess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">maximum_iterations</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+    <span class="n">absolute_tolerance</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+
+<span class="c1"># Solver dictionaries</span>
+<span class="n">tentative_velocity_solver</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">solver_type</span><span class="o">=</span><span class="s1">&#39;bicgstab&#39;</span><span class="p">,</span>
+    <span class="n">preconditioner_type</span><span class="o">=</span><span class="s1">&#39;jacobi&#39;</span><span class="p">)</span>
+
+<span class="n">solid_displacement_parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;newton_solver&quot;</span><span class="p">:{</span><span class="s2">&quot;linear_solver&quot;</span><span class="p">:</span><span class="n">solid_momentum_solver</span><span class="p">[</span><span class="s1">&#39;solver_type&#39;</span><span class="p">],</span> <span class="s2">&quot;preconditioner&quot;</span><span class="p">:</span><span class="s1">&#39;hypre_amg&#39;</span><span class="p">,</span> <span class="s2">&quot;report&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> \
+                                                  <span class="s2">&quot;error_on_nonconvergence&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;absolute_tolerance&quot;</span><span class="p">:</span><span class="mf">1e-15</span><span class="p">,</span> <span class="s2">&quot;relative_tolerance&quot;</span><span class="p">:</span><span class="mf">1e-6</span><span class="p">,</span> <span class="s2">&quot;maximum_iterations&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”788933fd1f7d459096e9cdd023539f04” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Figure 4: $\quad$ User control to append the choice of
+iterative solvers, tolerances and monitoring convergence in
+solver_options.py.<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}
+:::</p>
+<p>::: {.cell .markdown cell_id=”fda19b56aed44f02977f3f9e145416d4” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+</section>
+<section id="user-inputs">
+<h2>user_inputs<a class="headerlink" href="#user-inputs" title="Permalink to this heading">¶</a></h2>
+<p>This python module provides input to the
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}vanDANA_solver<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} mainly in terms of control
+parameters, time step, meshes, initial and boundary conditions for any
+given physical problem. Here we allow user control from two files
+namely - user_parameters.py, boundary_initial_conditions.py.</p>
+<p>In case of any custom inputs to the solver, the user may add special
+expressions or subroutines in problem_specific.py.
+:::</p>
+<p>::: {.cell .markdown cell_id=”006bdfb34ed54ce28e655f59b6eb30c5” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+<section id="import-mesh">
+<h3>import mesh<a class="headerlink" href="#import-mesh" title="Permalink to this heading">¶</a></h3>
+<p>The accepted file format for meshes in vanDANA_solver is HDF5. This is
+mainly because in FEniCS,
+<a class="reference external" href="https://fenicsproject.org/olddocs/dolfin/1.3.0/python/programmers-reference/cpp/io/HDF5File.html">HDF5file</a>
+format is readily compatible for parallel input/output using MPI.</p>
+<p>We encourage the user to prepare a tetrahedral mesh on any open-source
+platform (for eg. Gmsh, Salome) and export it to an HDF5 format for
+input to the vanDANA_solver. The user needs to rename the fluid mesh
+file as <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}file_f.h5<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} and the solid mesh file as
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}file_s.h5<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} before it can be imported by the
+vanDANA_solver. Both these files are read-in from the user_inputs
+module.
+:::</p>
+<p>::: {.cell .markdown cell_id=”4aef829bcb0e445ab23ec6fb6c88c8ff” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:37}” deepnote_cell_type=”markdown”}</p>
+</section>
+<section id="user-parameters-py-user-parameterspy">
+<h3>user_parameters.py {#user_parameterspy}<a class="headerlink" href="#user-parameters-py-user-parameterspy" title="Permalink to this heading">¶</a></h3>
+<p>:::</p>
+<p>::: {.cell .code cell_id=”8fb496e6d3da4f779dee04013477ff2b” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”code” deepnote_to_be_reexecuted=”true” output_cleared=”true” source_hash=”4e046ed6” tags=”[]”}</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">restart</span> <span class="o">=</span> <span class="kc">False</span>									<span class="c1"># Restart parameter</span>
+
+<span class="c1"># Physics of the problem</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">problem_physics</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+				  <span class="n">solve_temperature</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>		<span class="c1"># enter &quot;True&quot; if you want to solve for temperature</span>
+
+				  <span class="n">solve_FSI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>				<span class="c1"># enter &quot;True&quot; if you want to solve for fluid-structure interaction</span>
+				  
+				  <span class="n">compressible_solid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>	<span class="c1"># enter &quot;True&quot; if compressible: Also remember to specify compressibility (Ld)</span>
+				  								<span class="c1"># enter &quot;False&quot; if incompressible</span>
+
+				  <span class="n">viscous_dissipation</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>	<span class="c1"># Heat release due to viscous gradients </span>
+
+				  <span class="n">body_force</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>      		<span class="c1"># Gravitational force (uniform volumetric force)								 </span>
+				<span class="p">)</span>
+	
+<span class="k">def</span> <span class="nf">f_dir</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>									<span class="c1"># Body force direction : -ve y direction (by default)</span>
+	
+	<span class="n">n</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">tensors</span><span class="o">.</span><span class="n">unit_vector</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> 
+	<span class="k">return</span> <span class="n">n</span>
+
+<span class="n">interpolation_fx</span> <span class="o">=</span> <span class="s1">&#39;phi4&#39;</span>						<span class="c1"># Delta-function interpolation for FSI problems</span>
+
+<span class="c1"># FEM stabilization and constants</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">stabilization_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>	
+
+	<span class="c1"># Navier-stokes</span>
+	<span class="n">SUPG_NS</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>							<span class="c1"># explicit</span>
+	<span class="n">PSPG_NS</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>							<span class="c1"># explicit		</span>
+	<span class="n">crosswind_NS</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>						<span class="c1"># implicit</span>
+	<span class="n">backflow_NS</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>					
+
+	<span class="c1"># Energy-equation</span>
+	<span class="n">SUPG_HT</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>							<span class="c1"># explicit</span>
+	<span class="n">crosswind_HT</span> <span class="o">=</span> <span class="kc">False</span>						<span class="c1"># implicit</span>
+<span class="p">)</span>
+
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="mf">0.85</span><span class="p">)</span>                   	  	<span class="c1"># SUPG/PSPG stabilization constant </span>
+<span class="n">C_cw</span> <span class="o">=</span> <span class="n">Constant</span><span class="p">(</span><span class="mf">0.7</span><span class="p">)</span>                       		<span class="c1"># Crosswind stabilization constant (As per R Codina : quadratic elements: 0.35, for linear elements: 0.7)</span>
+
+<span class="c1"># Physical parameters    </span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">physical_parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+ 
+	<span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span><span class="p">,</span>									<span class="c1"># Gravity (m/s2)						  </span>
+
+	<span class="c1"># Fluid </span>
+	<span class="n">rho_f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>									<span class="c1"># Density (kg/m3)</span>
+	<span class="n">nu</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>										<span class="c1"># Dynamic viscosity (kg/m.s)</span>
+	<span class="n">Spht_f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>         						<span class="c1"># Specific heat (J/kg.C)</span>
+	<span class="n">K_f</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>									<span class="c1"># Thermal conductivity (W/m.C)</span>
+
+	<span class="c1"># Solid</span>
+	<span class="n">rho_s</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>									<span class="c1"># Density (kg/m3)</span>
+	<span class="n">Sm</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>										<span class="c1"># Shear modulus (N/m2)</span>
+	<span class="n">Ld</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>										<span class="c1"># Compressibility (N/m2)</span>
+	<span class="n">Spht_s</span> <span class="o">=</span> <span class="mf">0.11</span><span class="p">,</span>								<span class="c1"># Specific heat (J/kg.C)</span>
+	<span class="n">K_s</span> <span class="o">=</span> <span class="mf">1.2</span> 									<span class="c1"># Thermal conductivity (W/m.C)</span>
+<span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">calc_non_dimensional_solid_properties</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho_f</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">Spht_f</span><span class="p">,</span> <span class="n">K_f</span><span class="p">,</span> <span class="n">rho_s</span><span class="p">,</span> <span class="n">Sm</span><span class="p">,</span> <span class="n">Ld</span><span class="p">,</span> <span class="n">Spht_s</span><span class="p">,</span> <span class="n">K_s</span><span class="p">,</span> <span class="n">Lsc</span><span class="p">,</span> <span class="n">Vsc</span><span class="p">,</span> <span class="n">T0</span><span class="p">,</span> <span class="n">Tm</span><span class="p">,</span> <span class="n">Tsc</span><span class="p">):</span>
+
+	<span class="n">rho</span> <span class="o">=</span> <span class="n">rho_s</span><span class="o">/</span><span class="n">rho_f</span>
+	<span class="n">Spht</span> <span class="o">=</span> <span class="n">Spht_s</span><span class="o">/</span><span class="n">Spht_f</span>
+	<span class="n">K</span> <span class="o">=</span> <span class="n">K_s</span><span class="o">/</span><span class="n">K_f</span>
+	<span class="n">Ld</span> <span class="o">=</span> <span class="n">Ld</span><span class="o">/</span><span class="p">(</span><span class="n">rho_f</span><span class="o">*</span><span class="n">Vsc</span><span class="o">*</span><span class="n">Vsc</span><span class="p">)</span>
+	<span class="n">Sm</span> <span class="o">=</span> <span class="n">Sm</span><span class="o">/</span><span class="p">(</span><span class="n">rho_f</span><span class="o">*</span><span class="n">Vsc</span><span class="o">*</span><span class="n">Vsc</span><span class="p">)</span>
+	
+	<span class="k">return</span> <span class="n">rho</span><span class="p">,</span> <span class="n">Spht</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">Ld</span><span class="p">,</span> <span class="n">Sm</span>
+
+<span class="c1"># Characteristic scales</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">characteristic_scales</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+	
+	<span class="n">Lsc</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>			            <span class="c1"># m          </span>
+	<span class="n">Vsc</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>	         		    <span class="c1"># m/s</span>
+	<span class="n">T0</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="mi">52</span><span class="p">,</span>						<span class="c1"># lower_temp (C)</span>
+	<span class="n">Tm</span> <span class="o">=</span> <span class="mi">37</span>							<span class="c1"># higher_temp (c)</span>
+<span class="p">)</span>
+
+<span class="c1"># Temporal control</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">time_control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+				 <span class="n">C_no</span> <span class="o">=</span> <span class="mf">0.35</span><span class="p">,</span> 					<span class="c1"># Maximum possible Courant number</span>
+			   	 <span class="n">dt</span> <span class="o">=</span> <span class="mf">0.0025</span><span class="p">,</span>  					<span class="c1"># Time-step: constant throughout runtime if adjustable-timestep is &quot;False&quot;</span>
+			   	 <span class="n">T</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>						<span class="c1"># Total runtime</span>
+			   	 <span class="n">adjustable_timestep</span> <span class="o">=</span> <span class="kc">True</span> 	<span class="c1"># Calculate time-step using max Courant no. during runtime: used to accelerate temporal solution</span>
+			   <span class="p">)</span>
+
+<span class="c1"># FEM degree of variables</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">fem_degree</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+				<span class="n">velocity_degree</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+				<span class="n">pressure_degree</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+				<span class="n">temperature_degree</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> 
+				<span class="n">displacement_degree</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+				<span class="n">lagrange_degree</span> <span class="o">=</span> <span class="mi">1</span>
+			   <span class="p">)</span>
+
+<span class="c1"># Non-dimensional numbers</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">calc_non_dimensional_numbers</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">rho_f</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">Spht_f</span><span class="p">,</span> <span class="n">K_f</span><span class="p">,</span> <span class="n">rho_s</span><span class="p">,</span> <span class="n">Sm</span><span class="p">,</span> <span class="n">Ld</span><span class="p">,</span> <span class="n">Spht_s</span><span class="p">,</span> <span class="n">K_s</span><span class="p">,</span> <span class="n">Lsc</span><span class="p">,</span> <span class="n">Vsc</span><span class="p">,</span> <span class="n">T0</span><span class="p">,</span> <span class="n">Tm</span><span class="p">,</span> <span class="n">Tsc</span><span class="p">):</span>
+
+	<span class="n">Re</span> <span class="o">=</span> <span class="n">rho_f</span><span class="o">*</span><span class="p">(</span><span class="n">Vsc</span><span class="o">*</span><span class="n">Lsc</span><span class="p">)</span><span class="o">/</span><span class="n">nu</span>            
+	<span class="n">Pr</span> <span class="o">=</span> <span class="p">(</span><span class="n">Spht_f</span><span class="o">*</span><span class="n">nu</span><span class="p">)</span><span class="o">/</span><span class="n">K_f</span> 
+	<span class="n">Ec</span> <span class="o">=</span> <span class="p">(</span><span class="n">Vsc</span><span class="o">*</span><span class="n">Vsc</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Spht_f</span><span class="o">*</span><span class="p">(</span><span class="n">Tm</span><span class="o">-</span><span class="n">T0</span><span class="p">))</span>
+	<span class="n">Fr</span> <span class="o">=</span> <span class="n">Vsc</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="n">g</span><span class="o">*</span><span class="n">Lsc</span><span class="p">)</span> 
+
+	<span class="k">return</span> <span class="n">Re</span><span class="p">,</span> <span class="n">Pr</span><span class="p">,</span> <span class="n">Ec</span><span class="p">,</span> <span class="n">Fr</span>
+
+<span class="c1"># Enter &quot;True&quot; if you want to post-process data</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">post_process</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># File printing / solid-remeshing control</span>
+<span class="c1"># ---------------------------------------------------------------------</span>
+<span class="n">print_control</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                  <span class="n">a</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>   <span class="c1"># for printing variables and restart files</span>
+                  <span class="n">b</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>  	<span class="c1"># for post processing data</span>
+                  <span class="n">c</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> 	<span class="c1"># for simulation_wall_time text file</span>
+                  <span class="n">d</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>   	<span class="c1"># for remeshing solid current-configuration mesh		</span>
+                  <span class="n">e</span> <span class="o">=</span> <span class="mi">20</span>    <span class="c1"># for runtime_tsp_courant_no_stats text file	</span>
+                <span class="p">)</span>
+
+<span class="c1"># If 2D problem?: Do u want to calculate stream function and vorticity! # Note to self: streamfunction is not defined for 3D.</span>
+<span class="c1"># --------------------------------------------------------------------- </span>
+<span class="n">calc_stream_function</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”69ca2527c30c4f048973a2d659a55539” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Figure 5: $\quad$All control parameters are provided as
+input to the vanDANA_solver (args) from user_parameters.py. The ones
+most frequently used, can also be provided as input in the form of
+keywords to the executable (vanDANA.py) using (args).
+:::</p>
+<p>::: {.cell .markdown cell_id=”845d4e33ba2a4f399f977fe822f71e55” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+This file defines all the major control parameters (except
+boundary/initial conditions) for any generalized problem setup. In
+Figure 5, most parameters are grouped using python dictionaries and the
+comments are self-sufficient for readers initialization. Note that
+dictionaries like <code class="docutils literal notranslate"><span class="pre">problem_physics</span></code> and <code class="docutils literal notranslate"><span class="pre">stabilization_parameters</span></code> can
+be initialized easily using booleans. For example, if
+<code class="docutils literal notranslate"><span class="pre">problem_physics['solve_FSI']</span> <span class="pre">==</span> <span class="pre">False</span></code>, the vanDANA_solver switches to
+a standard CFD flow solver with heat transfer.</p>
+<p>Another important feature is the <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}restart<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}
+parameter, which if “True” will flawlessly restart the entire
+simulation from the last saved time step. In user_parameters.py, we
+allow for the user to input dimensional parametric values (and
+corresponding characteristic scales), during runtime the code
+automatically calculates the non-dimensional variables using functions
+like <code class="docutils literal notranslate"><span class="pre">calc_non_dimensional_numbers</span></code> and
+<code class="docutils literal notranslate"><span class="pre">calc_non_dimenional_solid_properties</span></code>.</p>
+<p>We also provide a few more important features :</p>
+<ul class="simple">
+<li><p>The order of finite-element basis functions for all variables can be
+specified using the <code class="docutils literal notranslate"><span class="pre">fem_degree</span></code> dictionary.</p></li>
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">time_control</span></code> dictionary if adjustable_timestep is set as
+True, the code will automatically calculate the time step during
+run-time by limiting the maximum Courant number to
+<code class="docutils literal notranslate"><span class="pre">time_control['C_no']</span></code>. Otherwise if adjustable_timestep is set as
+False, it will use <code class="docutils literal notranslate"><span class="pre">time_control['dt']</span></code> as a constant time step.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">print_control</span></code> dictionary permits control to specify different
+counters used for printing, mesh smoothing etc. Note that if the
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}post_process<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} flag is set as False, the code
+will override the <code class="docutils literal notranslate"><span class="pre">print_control['b']</span></code> value and disable the output
+of post_processing text files.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">calc_stream_function</span></code> flag if True, enables calculation of
+vorticity and stream function only for a 2D problem setup. This is
+mainly because the steam function is defined only in 2D and we use
+the following equation:</p></li>
+</ul>
+<p>$$
+\boldsymbol{\nabla} ^2 \psi = -\omega
+$$ <code class="docutils literal notranslate"><span class="pre">&lt;div</span> <span class="pre">style=&quot;text-align:</span> <span class="pre">right&quot;&gt;</span></code>{=html} (14) <code class="docutils literal notranslate"><span class="pre">&lt;/div&gt;</span></code>{=html}</p>
+<ul class="simple">
+<li><p>The flag <code class="docutils literal notranslate"><span class="pre">problem_physics['body_force']</span> <span class="pre">==</span> <span class="pre">True</span></code>, the function
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}f_dir(dim)<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} and the value of
+<code class="docutils literal notranslate"><span class="pre">physical_paramters['g']</span></code> are used to set the activation, direction
+and magnitude of volumetric gravitational force in the overall FSI
+domain.</p></li>
+<li><p>The effect of stabilization schemes can also be varied using the two
+stabilization constants <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}alpha<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} and
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}C_cw<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Important:<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} One of the most central advantage of
+our code is the ease of definition in user_parameters.py and the
+flexiblity to update dictionaries using keywords from the terminal,
+which allows for easy restart and testing of the vanDANA_solver.
+:::</p>
+<p>::: {.cell .markdown cell_id=”cc7883967b5e41b3b4090a7f7ee608b8” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:19}” deepnote_cell_type=”markdown”}</p>
+</section>
+<section id="boundary-initial-conditions-py-boundary-initial-conditionspy">
+<h3>boundary_initial_conditions.py {#boundary_initial_conditionspy}<a class="headerlink" href="#boundary-initial-conditions-py-boundary-initial-conditionspy" title="Permalink to this heading">¶</a></h3>
+<p>:::</p>
+<p>::: {.cell .code cell_id=”a6b6604c770a4a8b842fb782d8ff89f1” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:25}” deepnote_cell_type=”code” deepnote_to_be_reexecuted=”false” execution_millis=”370” execution_start=”1673387555049” output_cleared=”true” source_hash=”47c312c7”}</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PeriodicDomain</span><span class="p">(</span><span class="n">SubDomain</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">inside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">on_boundary</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">DOLFIN_EPS</span> <span class="ow">and</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">DOLFIN_EPS</span> <span class="ow">and</span> <span class="n">on_boundary</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">y</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span>
+
+<span class="n">constrained_domain</span> <span class="o">=</span> <span class="n">PeriodicDomain</span><span class="p">()</span>    <span class="c1"># None</span>
+
+<span class="n">parabolic_profile</span> <span class="o">=</span> <span class="n">Expression</span><span class="p">(</span><span class="s1">&#39;6.0*x[1]*(4.1 - x[1])/(4.1*4.1)&#39;</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Point_pressure</span><span class="p">(</span><span class="n">SubDomain</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">inside</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">on_boundary</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">near</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">4.2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">near</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">5.</span><span class="p">)</span> <span class="ow">and</span> <span class="n">near</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">2.</span><span class="p">)</span>
+
+<span class="c1"># Boundary conditions</span>
+<span class="k">def</span> <span class="nf">fluid_create_boundary_conditions</span><span class="p">(</span><span class="n">fluid_mesh</span><span class="p">,</span> <span class="n">inflow</span><span class="p">,</span> <span class="o">**</span><span class="n">V</span><span class="p">):</span>
+
+	<span class="n">boundaries</span> <span class="o">=</span> <span class="n">fluid_mesh</span><span class="o">.</span><span class="n">get_mesh_boundaries</span><span class="p">()</span>
+
+	<span class="c1"># velocity</span>
+	<span class="n">bcu_left_x</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">parabolic_profile</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">bcu_bottom_x</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+	<span class="n">bcu_top_x</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+	<span class="n">bcu_x</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcu_left_x</span><span class="p">,</span> <span class="n">bcu_bottom_x</span><span class="p">,</span> <span class="n">bcu_top_x</span><span class="p">]</span>
+
+	<span class="n">bcu_left_y</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">bcu_bottom_y</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+	<span class="n">bcu_top_y</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+	<span class="n">bcu_y</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcu_left_y</span><span class="p">,</span> <span class="n">bcu_bottom_y</span><span class="p">,</span> <span class="n">bcu_top_y</span><span class="p">]</span>
+
+    <span class="n">bcu_left_z</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">bcu_bottom_z</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+	<span class="n">bcu_z</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcu_left_z</span><span class="p">,</span> <span class="n">bcu_bottom_z</span><span class="p">]</span>
+
+	<span class="n">bcu</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcu_x</span><span class="p">,</span> <span class="n">bcu_y</span><span class="p">,</span> <span class="n">bcu_z</span><span class="p">]</span>
+
+	<span class="c1"># pressure</span>
+	<span class="n">bcp_right</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+	<span class="n">bcp</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcp_right</span><span class="p">]</span>
+
+	<span class="c1"># Streamfunction</span>
+	<span class="n">wall</span>  <span class="o">=</span> <span class="s1">&#39;on_boundary&#39;</span>
+	<span class="n">bcPSI</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wall</span><span class="p">)</span>
+
+	<span class="n">bcs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">bcu</span><span class="p">,</span> <span class="n">pressure</span> <span class="o">=</span> <span class="n">bcp</span><span class="p">,</span> <span class="n">streamfunction</span> <span class="o">=</span> <span class="n">bcPSI</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">problem_physics</span><span class="p">[</span><span class="s1">&#39;solve_temperature&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+		<span class="c1"># temperature</span>
+		<span class="n">bcT_left</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid_temp&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+		<span class="n">bcT_top</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;fluid_temp&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+		<span class="n">bcT</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcT_left</span><span class="p">,</span> <span class="n">bcT_top</span><span class="p">]</span>
+		
+		<span class="n">bcs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">bcT</span><span class="p">)</span>
+			
+	<span class="k">return</span> <span class="n">bcs</span>
+
+
+<span class="k">def</span> <span class="nf">solid_create_boundary_conditions</span><span class="p">(</span><span class="n">solid_mesh_R</span><span class="p">,</span> <span class="n">compressible_solid</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="o">**</span><span class="n">V</span><span class="p">):</span>
+
+	<span class="n">boundaries</span> <span class="o">=</span> <span class="n">solid_mesh_R</span><span class="o">.</span><span class="n">get_mesh_boundaries</span><span class="p">()</span>
+	
+	<span class="c1"># Note to self: Boundary conditions are for incremental displacement (delta D)</span>
+
+	<span class="c1"># Solid</span>
+	<span class="k">if</span> <span class="n">compressible_solid</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+		<span class="n">bcx_cylinder</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;solid&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">Constant</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">compressible_solid</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+	    <span class="n">bcx_cylinder</span> <span class="o">=</span> <span class="n">DirichletBC</span><span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="s1">&#39;solid&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">Constant</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">boundaries</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+	<span class="n">bcx</span> <span class="o">=</span> <span class="p">[</span><span class="n">bcx_cylinder</span><span class="p">]</span>  
+	<span class="k">return</span> <span class="n">bcx</span>    
+
+
+<span class="c1"># Initial conditions</span>
+<span class="k">def</span> <span class="nf">fluid_create_initial_conditions</span><span class="p">(</span><span class="n">u_</span><span class="p">,</span> <span class="n">p_</span><span class="p">,</span> <span class="n">T_</span><span class="p">):</span>
+
+	<span class="c1"># Velocity / pressure</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+		<span class="n">u_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+		<span class="n">u_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+		<span class="n">u_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+		<span class="n">p_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+	<span class="c1"># Temperature</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+		<span class="n">T_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+	
+
+<span class="k">def</span> <span class="nf">solid_create_initial_conditions</span><span class="p">(</span><span class="n">Dp_</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+	
+	<span class="c1"># Solid pressure (only defined for incompressible solid)</span>
+	<span class="n">assign</span><span class="p">(</span><span class="n">mix</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">interpolate</span><span class="p">(</span><span class="n">Constant</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">mix</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">function_space</span><span class="p">()</span><span class="o">.</span><span class="n">collapse</span><span class="p">()))</span>
+
+	<span class="c1"># Cumulative displacement</span>
+	<span class="n">Dp_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span> 
+
+	<span class="c1"># Incremental displacement (delta D)</span>
+	<span class="n">Dp_</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1"># V_init*dt</span>
+	<span class="n">Dp_</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">vector</span><span class="p">()[:]</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1"># V_init*dt</span>
+	<span class="n">assign</span><span class="p">(</span><span class="n">mix</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">interpolate</span><span class="p">(</span><span class="n">Expression</span><span class="p">((</span><span class="s1">&#39;0.0&#39;</span><span class="p">,</span> <span class="s1">&#39;0.0&#39;</span><span class="p">,</span> <span class="s1">&#39;0.0&#39;</span><span class="p">),</span> <span class="n">degree</span> <span class="o">=</span> <span class="mi">2</span><span class="p">),</span> <span class="n">mix</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">function_space</span><span class="p">()</span><span class="o">.</span><span class="n">collapse</span><span class="p">()))</span>
+</pre></div>
+</div>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”773f978bfdca408c8e492b0bb4decf5d” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}Figure 6:$\quad$The boundary and initial conditons are
+provided as input to the vanDANA_solver from
+boundary_initial_conditions.py.
+:::</p>
+<p>::: {.cell .markdown cell_id=”0fdb0ce3518a4b268198c745a428bf20” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+To provide boundary conditions for any CFD setup, we need to flag the
+boundaries and regions/subdomains in the physical domain or meshfile.
+The flaging is generally done in advance during mesh preparation and
+hereafter can used in boundary_intial_conditions.py. In Figure 6,
+separate functions are provided to setup boundary/initial conditions for
+the fluid and solid domain.</p>
+<p>For the solid, the boundary conditions are provided for
+$\Delta \boldsymbol{x}$, instead of $\boldsymbol{x}$, where
+$\Delta \boldsymbol{x}$ is defined as a vector on the appropriate
+function space - for eg:
+<code class="docutils literal notranslate"><span class="pre">DirichletBC(V['solid'][1].sub(0),</span> <span class="pre">Constant((0,</span> <span class="pre">0,</span> <span class="pre">0)),</span> <span class="pre">boundaries,</span> <span class="pre">1)</span></code>.
+Otherwise for the fluid, boundary condtions are provided component wise
+as scalers for each direction - for eg:
+<code class="docutils literal notranslate"><span class="pre">bcu_bottom_x</span> <span class="pre">=</span> <span class="pre">DirichletBC(V['fluid'][0],</span> <span class="pre">Constant(0),</span> <span class="pre">boundaries,</span> <span class="pre">2)</span></code>.
+The same applies to setting up initial conditions. This is mainly
+because the flow solver
+(<a class="reference external" href="https://github.com/patelte8/vanDANA/blob/IB-FSI/common/flow_variational_problem.py">common/flow_variational_problem.py</a>)
+is split to solve component wise, so as to achieve better efficiency. If
+you have multiple boundary conditions, note that you still have to
+combine them into one list, for eg:
+<code class="docutils literal notranslate"><span class="pre">bcu_x</span> <span class="pre">=</span> <span class="pre">[bcu_left_x,</span> <span class="pre">bcu_bottom_x,</span> <span class="pre">bcu_top_x]</span></code>. Also, if your physics
+requires the need for <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}periodic boundary
+conditions<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html}, this can be setup using the class
+<a class="reference external" href="https://fenicsproject.org/olddocs/dolfin/1.4.0/python/demo/documented/periodic/python/documentation.html">PeriodicDomain(Subdomain)</a>
+in FEniCS.
+:::</p>
+<p>::: {.cell .markdown cell_id=”4636318c93554e4c97e5375f3800ed8c” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+</section>
+<section id="utilities">
+<h2>utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
+<p>The utilities module deals with the handling of background functions for
+the code and comprises of three files : utils.py, read.py and write.py.
+Almost all of the functionality for read, write, restart, MPI, counters,
+memory usage and timing of different modules is initialized and carried
+out using this module. For regular use of the vanDANA solver, the user
+need not make any changes to this module.
+:::</p>
+<p>::: {.cell .markdown cell_id=”575e21946744443bac2cb7ae6e76130c” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+</section>
+</section>
+<section id="case-setup">
+<h1>Case Setup<a class="headerlink" href="#case-setup" title="Permalink to this heading">¶</a></h1>
+<p>To setup your own physical problem,</p>
+<ol class="arabic simple">
+<li><p>Generate the fluid and immersed solid mesh as HDF5 format and move
+it inside the user_inputs module. Remember to flag the essential
+boundaries and domains to apply boundary conditions. We recommend
+using <a class="reference external" href="https://gmsh.info">Gmsh</a> to generate the mesh files.</p></li>
+<li><p>Setup your desired control parameters in user_parameters.py
+including total run time and time-step.</p></li>
+<li><p>Setup your required boundary and initial conditions in
+boundary_initial_conditions.py. If need arises, add custom
+expressions/subroutines in problem_specific.py or else leave it
+empty.</p></li>
+<li><p>If you wish to control the iterative solver settings (for eg:
+tolerances, monitoring convergence) for any particular variational
+problem, change the default values in solver_options.py.</p></li>
+<li><p>To calculate post-processing quantities at any flagged boundary,
+navigate to <code class="docutils literal notranslate"><span class="pre">&lt;b&gt;</span></code>{=html}post_process_data<code class="docutils literal notranslate"><span class="pre">&lt;/b&gt;</span></code>{=html} subroutine in
+the set of common/… variational_problem.py files and write
+desired code to export data from the variational problem. If you do
+not wish to output any post processing data, set the post_process
+flag in user_parameters.py as False.</p></li>
+<li><p>Navigate to the root folder and run the executable (vanDANA.py).</p></li>
+</ol>
+<p>Alternatively, one can also append important control parameters from the
+terminal. You can do so by adding arguments to the executable. This will
+allow efficient testing of the solver, for eg. :
+<code class="docutils literal notranslate"><span class="pre">mpirun.mpich</span> <span class="pre">-n</span> <span class="pre">64</span> <span class="pre">python3</span> <span class="pre">vanDANA.py</span> <span class="pre">-T=0.05</span> <span class="pre">-a=1000</span> <span class="pre">-velocity_degree=1</span></code>
+:::</p>
+<p>::: {.cell .markdown cell_id=”9f4b55f2d01b43709b87682035dff5c2” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:91}” deepnote_cell_type=”markdown”}</p>
+</section>
+<section id="running-the-code">
+<h1>Running the code<a class="headerlink" href="#running-the-code" title="Permalink to this heading">¶</a></h1>
+<p>A singularity build file is provided that will install necessary
+libraries &amp; setup the environment to run the code.</p>
+<ol class="arabic">
+<li><p>Install singularity (version 3.5 or newer) by following the
+instruction in
+<a class="reference external" href="https://docs.sylabs.io/guides/3.6/admin-guide/installation.html">here</a>.</p></li>
+<li><p>Build a singularity container using the build file
+<a class="reference external" href="https://github.com/patelte8/vanDANA/blob/IB-FSI/src/fenics_2019_dev">(src/fenics_2019_dev)</a>
+by</p>
+<p><code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">singularity</span> <span class="pre">build</span> <span class="pre">&lt;container_name&gt;.img</span> <span class="pre">fenics_2019_dev</span></code></p>
+</li>
+<li><p>Once the container is built, you can launch the singularity
+container by</p>
+<p><code class="docutils literal notranslate"><span class="pre">singularity</span> <span class="pre">run</span> <span class="pre">&lt;container_name&gt;.img</span></code></p>
+</li>
+<li><p>Go to the root folder and run <code class="docutils literal notranslate"><span class="pre">vanDANA.py</span></code> using</p>
+<p><code class="docutils literal notranslate"><span class="pre">mpirun.mpich</span> <span class="pre">-n</span> <span class="pre">&lt;#processors&gt;</span> <span class="pre">python3</span> <span class="pre">vanDANA.py</span></code>
+:::</p>
+</li>
+</ol>
+<p>::: {.cell .markdown cell_id=”5e95bb9c9b7c477b992bdf809a40cfff” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:49}” deepnote_cell_type=”markdown”}</p>
+</section>
+<section id="turek-hron-benchmark-fsi2">
+<h1>Turek, Hron benchmark (FSI2)<a class="headerlink" href="#turek-hron-benchmark-fsi2" title="Permalink to this heading">¶</a></h1>
+<p>We will now illustrate the implemention of a 2D classical benchmark
+(Turek and Hron ${ }^{[6]}$) using our vanDANA_solver. The fluid
+domain - $\Omega = [0, 11] \times[0, 4.1]$ comprises of a uniform mesh
+$700\times260$
+(<a class="reference external" href="https://github.com/patelte8/vanDANA/blob/IB-FSI/src/mesh.py">src/mesh.py</a>)
+and the solid is an elastic slender flag attached to the back of a rigid
+cylinder with center as $(2,2)$ and diameter as $D=1$. At beginning -
+reference configuration $P_0$, the flag is symmetric with respect to the
+cylinder center and its length (along the centerline) and thinkness are
+$l=3.5$ and $h=0.2$ respectively. The solid mesh is constructed such
+that is uniform inside the flag and has 12 mesh cells along its
+thickness
+(<a class="reference external" href="https://github.com/patelte8/vanDANA/blob/IB-FSI/src/flag.geo">src/flag.geo</a>).
+The boundary conditions for the top and bottom boundary are no-slip,
+left boundary is a constant inlet velocity profile of $U=\frac{6U_0
+y(H-y)}{H^2}; U_0=1 $ and the right boundary is outlet with pressure
+set as $0$ and $\nabla\boldsymbol{u}\cdot\boldsymbol{n}=0$. The
+characteristic length and velocity scales are $D$ and $U_0$ respectively
+and the $Re$ is set as $100$. For the elastic flag - the density ratio
+is $ρ_r=10$, non-dimensional shear modulus is $G = 500$, and the solid
+is considered compressible neo-Hookean with $λ_0=2000$.
+:::</p>
+<p>::: {.cell .markdown cell_id=”e8125c50b536447e9ea4dcb61a67f54f” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+<section id="results-and-post-processing">
+<h2>Results and Post Processing<a class="headerlink" href="#results-and-post-processing" title="Permalink to this heading">¶</a></h2>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”27c8f1b341d040baa1cee5ce7b88a775” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}</p>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”ff0faaa63bbd4f07bc4a9a95b616430e” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”text-cell-h1” formattedRanges=”[]” is_collapsed=”false” tags=”[]”}</p>
+</section>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h1>
+<p>:::</p>
+<p>::: {.cell .markdown cell_id=”4cf201b045e241cc8f1bad1795bd0399” deepnote_app_coordinates=”{“h”:5,”w”:12,”x”:0,”y”:0}” deepnote_cell_type=”markdown” tags=”[]”}
+[1] Yu, Zhaosheng. “A DLM/FD method for fluid/flexible-body
+interactions.” Journal of computational physics 207, no. 1 (2005): 1-27</p>
+<p>[2] Yu, Zhaosheng, Xueming Shao, and Anthony Wachs. “A fictitious
+domain method for particulate flows with heat transfer.” Journal of
+Computational Physics 217, no. 2 (2006): 424-452</p>
+<p>[3] Wang, Xingshi, and Lucy T. Zhang. “Interpolation functions in the
+immersed boundary and finite element methods.” Computational Mechanics
+45, no. 4 (2010): 321-334</p>
+<p>[4] Yang, Xiaolei, Xing Zhang, Zhilin Li, and Guo-Wei He. “A
+smoothing technique for discrete delta functions with application to
+immersed boundary method in moving boundary simulations.” Journal of
+Computational Physics 228, no. 20 (2009): 7821-7836</p>
+<p>[5] R. Codina, A discontinuity-capturing crosswind-dissipation for the
+finite element solution of the convection-diffusion equation, Computer
+Methods in Applied Mechanics and Engineering. 110 (1993) 325–342</p>
+<p>[6] Turek, Stefan, and Jaroslav Hron. Proposal for numerical
+benchmarking of fluid-structure interaction between an elastic object
+and laminar incompressible flow. Springer Berlin Heidelberg, 2006
+:::</p>
+<p>::: {.cell .markdown created_in_deepnote_cell=”true” deepnote_cell_type=”markdown” tags=”[]”}
+<code class="docutils literal notranslate"><span class="pre">&lt;a</span> <span class="pre">style='text-decoration:none;line-height:16px;display:flex;color:#5B5B62;padding:10px;justify-content:end;'</span> <span class="pre">href='https://deepnote.com?utm_source=created-in-deepnote-cell&amp;projectId=97fcbefa-f470-4c41-abd7-d08be048be4a'</span> <span class="pre">target=&quot;_blank&quot;&gt;</span></code>{=html}
+<code class="docutils literal notranslate"><span class="pre">&lt;img</span> <span class="pre">alt='Created</span> <span class="pre">in</span> <span class="pre">deepnote.com'</span> <span class="pre">style='display:inline;max-height:16px;margin:0px;margin-right:7.5px;'</span> <span class="pre">src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDU0LjEgKDc2NDkwKSAtIGh0dHBzOi8vc2tldGNoYXBwLmNvbSAtLT4KICAgIDx0aXRsZT5Hcm91cCAzPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGcgaWQ9IkxhbmRpbmciIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJBcnRib2FyZCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEyMzUuMDAwMDAwLCAtNzkuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIGlkPSJHcm91cC0zIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjM1LjAwMDAwMCwgNzkuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cG9seWdvbiBpZD0iUGF0aC0yMCIgZmlsbD0iIzAyNjVCNCIgcG9pbnRzPSIyLjM3NjIzNzYyIDgwIDM4LjA0NzY2NjcgODAgNTcuODIxNzgyMiA3My44MDU3NTkyIDU3LjgyMTc4MjIgMzIuNzU5MjczOSAzOS4xNDAyMjc4IDMxLjY4MzE2ODMiPjwvcG9seWdvbj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNS4wMDc3MTgsODAgQzQyLjkwNjIwMDcsNzYuNDU0OTM1OCA0Ny41NjQ5MTY3LDcxLjU0MjI2NzEgNDguOTgzODY2LDY1LjI2MTk5MzkgQzUxLjExMjI4OTksNTUuODQxNTg0MiA0MS42NzcxNzk1LDQ5LjIxMjIyODQgMjUuNjIzOTg0Niw0OS4yMTIyMjg0IEMyNS40ODQ5Mjg5LDQ5LjEyNjg0NDggMjkuODI2MTI5Niw0My4yODM4MjQ4IDM4LjY0NzU4NjksMzEuNjgzMTY4MyBMNzIuODcxMjg3MSwzMi41NTQ0MjUgTDY1LjI4MDk3Myw2Ny42NzYzNDIxIEw1MS4xMTIyODk5LDc3LjM3NjE0NCBMMzUuMDA3NzE4LDgwIFoiIGlkPSJQYXRoLTIyIiBmaWxsPSIjMDAyODY4Ij48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwzNy43MzA0NDA1IEwyNy4xMTQ1MzcsMC4yNTcxMTE0MzYgQzYyLjM3MTUxMjMsLTEuOTkwNzE3MDEgODAsMTAuNTAwMzkyNyA4MCwzNy43MzA0NDA1IEM4MCw2NC45NjA0ODgyIDY0Ljc3NjUwMzgsNzkuMDUwMzQxNCAzNC4zMjk1MTEzLDgwIEM0Ny4wNTUzNDg5LDc3LjU2NzA4MDggNTMuNDE4MjY3Nyw3MC4zMTM2MTAzIDUzLjQxODI2NzcsNTguMjM5NTg4NSBDNTMuNDE4MjY3Nyw0MC4xMjg1NTU3IDM2LjMwMzk1NDQsMzcuNzMwNDQwNSAyNS4yMjc0MTcsMzcuNzMwNDQwNSBDMTcuODQzMDU4NiwzNy43MzA0NDA1IDkuNDMzOTE5NjYsMzcuNzMwNDQwNSAwLDM3LjczMDQ0MDUgWiIgaWQ9IlBhdGgtMTkiIGZpbGw9IiMzNzkzRUYiPjwvcGF0aD4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+'</span> <span class="pre">&gt;</span></code>{=html}
+<code class="docutils literal notranslate"><span class="pre">&lt;/img&gt;</span></code>{=html} Created in
+<code class="docutils literal notranslate"><span class="pre">&lt;span</span> <span class="pre">style='font-weight:600;margin-left:4px;'&gt;</span></code>{=html}Deepnote<code class="docutils literal notranslate"><span class="pre">&lt;/span&gt;</span></code>{=html}<code class="docutils literal notranslate"><span class="pre">&lt;/a&gt;</span></code>{=html}
+:::</p>
+</section>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">vanDANA | User Manual</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Tejas Patel, Kai Thin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/notebooks/usermanual.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
