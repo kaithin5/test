@@ -9,7 +9,6 @@ Welcome to vanDANA | User Manual's documentation!
 .. toctree::
    :maxdepth: 3
 
-   installation
    instroduction
    dir_tree
    files_and_modules
