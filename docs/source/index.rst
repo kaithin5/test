@@ -7,16 +7,13 @@ Welcome to vanDANA | User Manual's documentation!
 =================================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   
-   _/sources/notebooks/usermanual
+   :maxdepth: 3
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   installation
+   instroduction
+   dir_tree
+   files_and_modules
+   case_setup
+   running_the_code
+   benchmarking
+   references
