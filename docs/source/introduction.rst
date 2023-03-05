@@ -1,6 +1,6 @@
 .. title:: Introduction
 
-.._introduction:
+.. _installation:
 
 ============
 Introduction
