@@ -13,6 +13,7 @@ Welcome to turtleFSI's documentation!
    :maxdepth: 3
 
    installation
+   introduction
    using_turtleFSI
    verif_perf
    new_features
