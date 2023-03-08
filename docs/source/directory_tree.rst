@@ -6,9 +6,9 @@
 Directory Tree
 ============
 
-```
-    vanDANA-IB-FSI
-     ┃
+```\
+    vanDANA-IB-FSI\
+     ┃\
      ┣ __init__.py
      ┣ vanDANA.py
      ┣ LICENSE.md
