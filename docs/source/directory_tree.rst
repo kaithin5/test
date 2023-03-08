@@ -8,7 +8,6 @@ Directory Tree
 
 .. container:: cell markdown
 
- ::
     vanDANA-IB-FSI
      ┃
      ┣ __init__.py
