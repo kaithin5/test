@@ -6,12 +6,12 @@
 Directory Tree
 ============
 
-```\
-    vanDANA-IB-FSI\
-     ┃\
-     ┣ __init__.py\
-     ┣ vanDANA.py\
-     ┣ LICENSE.md\
+""
+    vanDANA-IB-FSI
+     ┃
+     ┣ __init__.py
+     ┣ vanDANA.py
+     ┣ LICENSE.md
      ┃
      ┣ common
      ┃ ┣ __init__.py
@@ -60,4 +60,4 @@ Directory Tree
          ┣ solid_data.txt
          ┣ solid_mesh_quality.txt
          ┗ solid_temp_data.txt
- ```
+""
