@@ -6,8 +6,7 @@
 Directory Tree
 ============
 
-``test``
-
+``
     vanDANA-IB-FSI
      ┃
      ┣ __init__.py
@@ -61,4 +60,4 @@ Directory Tree
          ┣ solid_data.txt
          ┣ solid_mesh_quality.txt
          ┗ solid_temp_data.txt
- ''
+ ``
