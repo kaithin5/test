@@ -14,7 +14,7 @@ Welcome to turtleFSI's documentation!
 
    installation
    introduction
-   using_turtleFSI
+   direc_tree
    verif_perf
    new_features
    acknow_ref
