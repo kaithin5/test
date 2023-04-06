@@ -6,7 +6,7 @@
 .. title:: vanDANA
 
 =====================================
-Welcome to turtleFSI's documentation!
+Welcome to vanDANA's documentation!
 =====================================
 
 .. toctree::
