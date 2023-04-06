@@ -66,5 +66,4 @@ Directory Tree
            ┣ solid_mesh_quality.txt
            ┗ solid_temp_data.txt
 
- **Figure 1: Directory tree for vanDANA IB-FSI code. Note: /src folder
-   contains sample Gmsh (geo) files for reference.**
+ **Figure 1: Directory tree for vanDANA IB-FSI code. Note: /src folder contains sample Gmsh (geo) files for reference.**
