@@ -12,7 +12,6 @@ Welcome to vanDANA's documentation!
 .. toctree::
    :maxdepth: 3
 
-   installation
    introduction
    directory_tree
    verif_perf
