@@ -1,10 +1,14 @@
-.. title:: f
+.. title:: files_and_modules
 
-.. _installation:
+.. _files_and_modules:
 
 ============
-Installation
+File and Modules
 ============
 
-Compatibility and Dependencies
-==============================
+vanDANA is a python package with main executable (vanDANA.py) and three submodules (common, utilities, user_inputs).
+
+vanDANA.py
+==========
+
+
