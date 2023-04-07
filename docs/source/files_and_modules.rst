@@ -37,6 +37,7 @@ Our Immersed Boundary FSI formulation is based on the Distributed Lagrange Multi
   & +\left\langle\gamma_{S U P G}\left(\boldsymbol{u}^{\boldsymbol{\theta}}\right) P\left(\boldsymbol{u}^{\boldsymbol{\theta}}, \boldsymbol{v}\right), \boldsymbol{R}^{\boldsymbol{\theta}}\right\rangle+\left\langle\gamma_{C W}\left(\boldsymbol{u}^{\boldsymbol{\theta}}\right) \Lambda\left(\boldsymbol{u}^{\boldsymbol{\theta}}, \boldsymbol{u}^{*}\right), \nabla \boldsymbol{v}\right\rangle=\left\langle\lambda^{\boldsymbol{\theta}}, \boldsymbol{v}\right\rangle_{\boldsymbol{P}} 
   \end{aligned} 
   \label{a}   \tag{1}
+  
 where, :math:`\boldsymbol{u}^{*}` is the unknown intermediate flow velocity and :math:`\boldsymbol{u}_{\boldsymbol{c k}}^{*}=\frac{\boldsymbol{u}^{*}+\boldsymbol{u}^{\boldsymbol{\theta}}}{2}` is the Crank-Nicolson velocity. In the above equation, the vector Lagrange multiplier :math:`\boldsymbol{\lambda}` serves as a pseudo body force only in the overlapping solid region :math:`\boldsymbol{P}` and needs to be interpolated from the Lagrangian mesh via the smeared delta functions.
 
 **Step 2 - Pressure projection :math:`\&` velocity correction**:
