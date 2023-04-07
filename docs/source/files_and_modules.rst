@@ -27,6 +27,14 @@ Our Immersed Boundary FSI formulation is based on the Distributed Lagrange Multi
 
 **Flow problem: IPCS scheme**
 
-**Step 1 - Velocity prediction**: solve for :math:`\psi(r) = \exp(-2r)`
+**Step 1 - Velocity prediction**: solve for  solve for :math:`u^{*}`
 
-.. math:: \psi(r) = e^{-2r}
+.. math::
+
+  \begin{aligned}
+  \left\langle\frac{\boldsymbol{u}^{*}-\boldsymbol{u}^{\boldsymbol{\theta}}}{\Delta \tau}, \boldsymbol{v}\right\rangle+ & \left\langle\frac{3 \boldsymbol{u}^{\boldsymbol{\theta}}-  \boldsymbol{u}^{\boldsymbol{\theta}-1}}{2} \cdot \nabla \boldsymbol{u}_{\boldsymbol{c k}}^{*}, \boldsymbol{v}\right\rangle \\
+
+
+  \end{aligned}
+
+(1)
