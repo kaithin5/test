@@ -29,3 +29,4 @@ Our Immersed Boundary FSI formulation is based on the Distributed Lagrange Multi
 
 **Step 1 - Velocity prediction**: solve for :math:`\psi(r) = \exp(-2r)`
 
+.. math:: \psi(r) = e^{-2r}
