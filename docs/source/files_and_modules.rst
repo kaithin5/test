@@ -75,6 +75,7 @@ solve for :math:`p^{\theta+1}` and correct :math:`u^{\Phi}`.
 
 In the above equations :math:`\langle`,\ :math:`\rangle` represents the Euclidean inner product in the respective domain, :math:`\boldsymbol{u}` and :math:`p` are the fluid velocity and pressure, :math:`\boldsymbol{x}` is the solid displacement, :math:`\boldsymbol{F}` is the deformation gradient tensor and :math:`\rho_{r}` is the ratio of solid to fluid densities. Here, :math:`\Omega` is the overall fluid domain including the fictitious fluid and :math:`P_{0}` and :math:`P` are the reference and current solid configurations. The above DLM/FD algorithm is implemented in the time loop in **vanDANA_solver (args)**, see Figure 2 below.
 
+.. _Figure2:
 .. code:: python
 
       # Time loop
@@ -191,3 +192,6 @@ Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is so
 .. figure:: ../../figs/turek_benchmark.gif
  :width: 600px
  :align: center
+ 
+ 
+ Link to :ref:`Figure 2<Figure2>`
