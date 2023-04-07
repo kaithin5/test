@@ -179,3 +179,9 @@ In the above equations :math:`\langle`,\ :math:`\rangle` represents the Euclidea
                   a7, b7 = solid_temp.assemble_solid_temperature_lagrange_multiplier(Ts_, uf_, dt)
                   solid_temp.solve_solid_temperature_lagrange_multiplier(a7, LmTs_[0], b7)
               s7 += timer_s7.stop()
+
+**Figure 2: Time loop in vanDANA.py which runs the IB-FSI solver algorithm. All steps are timed using separate timers and the timings are listed in log_info.txt.**
+
+Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is solved in step 1,2 and 3. The solid momentum equation is solved in step 5 and the Lagrange multiplier problem is solved in step 6. In the solid equation, one needs to note that we solve for :math:`\Delta \boldsymbol{x}` which is the incremental displacement instead of the current solid position :math:`\boldsymbol{x}` (see Figure 3).
+
+
