@@ -192,6 +192,5 @@ Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is so
 .. figure:: ../../figs/turek_benchmark.gif
  :width: 600px
  :align: center
- 
- 
- Link to :ref:`Figure 2<Figure2>`
+  
+:ref:`Figure 2<Figure2>`
