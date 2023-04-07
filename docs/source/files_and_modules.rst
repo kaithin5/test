@@ -30,7 +30,7 @@ Our Immersed Boundary FSI formulation is based on the Distributed Lagrange Multi
 **Step 1 - Velocity prediction**: solve for :math:`u^{*}`
 
 .. math::
-  :label: (1)
+  :label: eq:(1)
   
   \begin{aligned}
   \left\langle\frac{\boldsymbol{u}^{*}-\boldsymbol{u}^{\boldsymbol{\theta}}}{\Delta \tau}, \boldsymbol{v}\right\rangle+ & \left\langle\frac{3 \boldsymbol{u}^{\boldsymbol{\theta}}-\boldsymbol{u}^{\boldsymbol{\theta}-1}}{2} \cdot \nabla \boldsymbol{u}_{\boldsymbol{c k}}^{*}, \boldsymbol{v}\right\rangle \\
