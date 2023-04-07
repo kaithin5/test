@@ -184,4 +184,10 @@ In the above equations :math:`\langle`,\ :math:`\rangle` represents the Euclidea
 
 Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is solved in step 1,2 and 3. The solid momentum equation is solved in step 5 and the Lagrange multiplier problem is solved in step 6. In the solid equation, one needs to note that we solve for :math:`\Delta \boldsymbol{x}` which is the incremental displacement instead of the current solid position :math:`\boldsymbol{x}` (see Figure 3).
 
-
+.. figure:: ../../figs/Picture1.png
+   :width: 600px
+   :align: center
+   
+.. figure:: ../../figs/turek_benchmark.gif
+ :width: 600px
+ :align: center
