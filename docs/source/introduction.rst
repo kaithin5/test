@@ -16,4 +16,4 @@ This manual intends to create a basic understanding of the numerical algorithm a
 
 Note: vanDANA is licensed under the GNU GPL, version 3 or any later version and is Copyright (2022) by the authors.
 
-Hi this is kai
+
