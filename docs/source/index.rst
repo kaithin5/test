@@ -15,6 +15,4 @@ Welcome to vanDANA's documentation!
    introduction
    directory_tree
    files_and_modules
-   verif_perf
-   new_features
-   acknow_ref
+   
