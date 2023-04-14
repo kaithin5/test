@@ -195,4 +195,4 @@ Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is so
 
 Link to :ref:`Figure 2<Figure2>`
 
-Link to :ref:`Equation 2<b>`
+Link to :ref:`Introduction<introduction>`
