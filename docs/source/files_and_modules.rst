@@ -25,7 +25,7 @@ To obtain more control at the command prompt, we use the `argparse library <http
 
 Our Immersed Boundary FSI formulation is based on the Distributed Lagrange Multiplier (DLM) based Fictitious Domain (FD) method and the physical problem is decomposed into the fluid, solid and Lagrange multiplier sub-problems. The entire code is non-dimensional, and we use the Finite Element Method (FEM) for spatial discretization of the governing equations. For a detailed understanding of the numerical scheme, we advise the reader to refer to Yu :sup:`[1]` and Yu et al :sup:`[2]`.
 
-`argparse library <https://docs.python.org/3/library/argparse.html>`__
+`[1] <https://research.utwente.nl/en/publications/a-dlmfd-method-for-fluidflexible-body-interactions>`__
 
 **Flow problem: IPCS scheme**
 
