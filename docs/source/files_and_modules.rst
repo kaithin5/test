@@ -194,3 +194,5 @@ Our flow solver uses the Incremental Pressure Correction Scheme (IPCS) and is so
  :align: center
 
 Link to :ref:`Figure 2<Figure2>`
+
+Link to :ref:`Equation 2<b>`
